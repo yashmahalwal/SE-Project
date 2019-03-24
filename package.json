@@ -27,7 +27,8 @@
   },
   "homepage": "https://github.com/yashmahalwal/SE-Project#readme",
   "dependencies": {
-    "babel-loader": "^8.0.5"
+    "babel-loader": "^8.0.5",
+    "express": "^4.16.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
@@ -36,7 +37,9 @@
     "@babel/preset-react": "^7.0.0",
     "bulma": "^0.7.4",
     "css-loader": "^2.1.1",
+    "file-loader": "^3.0.1",
     "node-sass": "^4.11.0",
+    "nodemon": "^1.18.10",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "sass": "^1.17.3",

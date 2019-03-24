@@ -1,16 +1,11 @@
 const path = require("path");
 
 module.exports = {
-    entry: path.resolve(__dirname, "src", "index.js"),
+    entry: path.resolve(__dirname, "resources", "login", "src", "index.js"),
     output: {
+        publicPath: "/resources/login/dist/",
         filename: "bundle.js",
-        path: path.resolve(__dirname, "dist")
-    },
-    resolve: {
-        modules: [path.resolve(__dirname, '../../', 'node_modules'), 'node_modules']
-    },
-    resolveLoader: {
-        modules: [path.resolve(__dirname, '../../', 'node_modules'), 'node_modules']
+        path: path.resolve(__dirname, "resources", "login", "dist")
     },
     module: {
         rules: [{
@@ -23,10 +18,14 @@ module.exports = {
             {
                 test: /\.jsx$/,
                 use: 'babel-loader'
+            },
+            {
+                test: /\.(jpeg|jpg|gif|png|svg)$/,
+                use: 'file-loader'
             }
         ]
     },
     devServer: {
-        contentBase: path.join(__dirname, 'dist')
+        contentBase: path.join(__dirname, "resources", "login", "dist")
     }
 }

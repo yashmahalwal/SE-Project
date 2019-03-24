@@ -1,13 +1,14 @@
 @import "../../node_modules/bulma/sass/utilities/functions.sass";
 
-/* Edit the initial variables here */
+// Edit the initial variables here
 
 @import "../../node_modules/bulma/sass/utilities/initial-variables.sass";
 
-/* Edit the derived variables here */
+// Edit the derived variables here
 
 @import "../../node_modules/bulma/sass/utilities/derived-variables.sass";
 
-/* Rest of the generics */
+// Rest of the basics
 
 @import "../../node_modules/bulma/sass/utilities/_all.sass";
+@import "../../node_modules/bulma/sass/base/_all.sass";

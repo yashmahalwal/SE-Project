@@ -1,0 +1,87 @@
+/* Bulma */
+@import "../../generic/bulma.scss";
+
+// Required Components
+
+@import "../../../node_modules/bulma/sass/elements/title.sass";
+
+/* Basic styling */
+html {
+    overflow: hidden;
+
+    *::selection {
+        background: rgba($black, 0.4);
+        color: $white;
+    }
+}
+
+
+/* The app */
+.app {
+    /* Positioning */
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    /* Background */
+    background: url("./analog-camera-blackboard-camera-900106.jpg");
+    background-size: cover;
+
+    /* The login panel */
+    .panel {
+        /* Positioning */
+        position: absolute;
+        top: 0;
+        left: 60vw;
+        right: 0;
+        bottom: 0;
+
+        &.hover-effects {
+
+            /* Background */
+            background: rgba($white, 0.7);
+            transition: background 500ms;
+            /* Box model attributes */
+            padding: 20px 10px;
+
+            /* Special States */
+            &:hover {
+                background: rgba($white, 0.9);
+            }
+        }
+    }
+}
+
+/* Media Queries */
+
+/* Upto small desktops */
+@media (max-width: $desktop) {
+    .app {
+        .panel {
+            left: 50vw;
+        }
+    }
+}
+
+/* Upto tablets */
+@media (max-width: $tablet) {
+    .app {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: url("./trianglify.svg");
+
+        .panel {
+            all: unset;
+            position: relative;
+            border-radius: 10px;
+
+            &.hover-effects {
+                transition: background 500ms, box-shadow 500ms;
+
+                &:hover {
+                    box-shadow: 0 0 5px 2px;
+                }
+            }
+        }
+    }
+}
