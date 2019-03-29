@@ -173,6 +173,8 @@ html {
         justify-content: center;
         background-image: url("./trianglify.svg");
         padding: 15px;
+        min-height: 100vh;
+        height: auto;
 
         .panel {
             width: auto;
