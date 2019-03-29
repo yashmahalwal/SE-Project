@@ -20,8 +20,12 @@ module.exports = {
                 use: 'babel-loader'
             },
             {
-                test: /\.(jpeg|jpg|gif|png|svg)$/,
+                test: /\.(jpeg|jpg|gif|png|svg|ttf|eot)$/,
                 use: 'file-loader'
+            },
+            {
+                test: /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+                use: 'url-loader?limit=10000',
             }
         ]
     },

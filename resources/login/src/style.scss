@@ -4,26 +4,83 @@
 // Required Components
 
 @import "../../../node_modules/bulma/sass/elements/title.sass";
+@import "../../../node_modules/bulma/sass/elements/form.sass";
+@import "../../../node_modules/bulma/sass/components/level.sass";
+@import "../../../node_modules/bulma/sass/elements/notification.sass";
+
+
 
 /* Basic styling */
 html {
     overflow: hidden;
 
     *::selection {
-        background: rgba($black, 0.4);
+        background: $link;
         color: $white;
+    }
+
+    /* width */
+    ::-webkit-scrollbar {
+        width: 7px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 }
 
+/* The notification component */
+.notification-holder {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    padding: 0 10vw;
+    align-items: center;
+    justify-content: center;
+    background: rgba($black, 0.8);
+    z-index: 1000;
+    transition: opacity 300ms, visibility 300ms;
+
+    .notification {
+        max-width: 600px;
+    }
+
+    .overlay {
+        cursor: pointer;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    &.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
 
 /* The app */
 .app {
     /* Positioning */
     position: relative;
     height: 100vh;
-    width: 100vw;
     /* Background */
-    background: url("./analog-camera-blackboard-camera-900106.jpg");
+    background-image: url("./analog-camera-blackboard-camera-900106.jpg");
     background-size: cover;
 
     /* The login panel */
@@ -31,22 +88,53 @@ html {
         /* Positioning */
         position: absolute;
         top: 0;
-        left: 60vw;
+        width: 40vw;
+        max-width: 600px;
         right: 0;
         bottom: 0;
+        overflow-y: auto;
+        /* Box model attributes */
+        padding: 20vh 30px 0;
+
+        input[type=text],
+        input[type=password] {
+            background: rgba($white, 0.6);
+
+            &::placeholder {
+                user-select: none;
+            }
+        }
 
         &.hover-effects {
 
             /* Background */
-            background: rgba($white, 0.7);
+            background: rgba($white, 0.8);
             transition: background 500ms;
-            /* Box model attributes */
-            padding: 20px 10px;
 
             /* Special States */
             &:hover {
-                background: rgba($white, 0.9);
+                background: rgba($white, 0.95);
             }
+        }
+
+        .holder {
+            /* Display */
+            height: 55vh;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    }
+
+    /* The password peek */
+    .peek {
+        pointer-events: all;
+        cursor: pointer;
+        color: #000;
+
+        &.disabled {
+            pointer-events: none;
         }
     }
 }
@@ -57,29 +145,50 @@ html {
 @media (max-width: $desktop) {
     .app {
         .panel {
-            left: 50vw;
+            width: 55vw;
+
+            &.hover-effects {
+
+                /* Background */
+                background: rgba($white, 0.9);
+
+                /* Special States */
+                &:hover {
+                    background: rgba($white, 0.96);
+                }
+            }
         }
     }
 }
 
 /* Upto tablets */
 @media (max-width: $tablet) {
+    html {
+        overflow: auto;
+    }
+
     .app {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: url("./trianglify.svg");
+        background-image: url("./trianglify.svg");
+        padding: 15px;
 
         .panel {
-            all: unset;
+            width: auto;
+
+            .holder {
+                height: auto;
+            }
+
             position: relative;
-            border-radius: 10px;
+            padding: 30px 20px;
 
             &.hover-effects {
-                transition: background 500ms, box-shadow 500ms;
+                transition: background 500ms, box-shadow 200ms;
 
                 &:hover {
-                    box-shadow: 0 0 5px 2px;
+                    box-shadow: 3px 3px 10px -3.5px #000;
                 }
             }
         }
