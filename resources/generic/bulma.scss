@@ -15,3 +15,28 @@
 @import "../../node_modules/bulma/sass/elements/icon.sass";
 @import "../../node_modules/bulma/sass/elements/button.sass";
 @import "../../node_modules/bulma/sass/elements/other.sass";
+@import "../../../node_modules/bulma/sass/elements/title.sass";
+
+/* Show scrollbar only as needed */
+html {
+    overflow: auto;
+}
+
+/* The password peek */
+.peek {
+    pointer-events: all;
+    cursor: pointer;
+    color: #000;
+
+    &.disabled {
+        pointer-events: none;
+    }
+}
+
+input[type=text],
+input[type=password] {
+
+    &::placeholder {
+        user-select: none;
+    }
+}

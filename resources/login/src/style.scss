@@ -3,7 +3,6 @@
 
 // Required Components
 
-@import "../../../node_modules/bulma/sass/elements/title.sass";
 @import "../../../node_modules/bulma/sass/elements/form.sass";
 @import "../../../node_modules/bulma/sass/components/level.sass";
 @import "../../../node_modules/bulma/sass/elements/notification.sass";
@@ -99,10 +98,6 @@ html {
         input[type=text],
         input[type=password] {
             background: rgba($white, 0.6);
-
-            &::placeholder {
-                user-select: none;
-            }
         }
 
         &.hover-effects {
@@ -124,17 +119,6 @@ html {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-        }
-    }
-
-    /* The password peek */
-    .peek {
-        pointer-events: all;
-        cursor: pointer;
-        color: #000;
-
-        &.disabled {
-            pointer-events: none;
         }
     }
 }

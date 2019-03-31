@@ -187,70 +187,17 @@ class Input extends React.Component {
     }
 }
 
-// The notification component
-class Notification extends React.Component {
+class App extends React.Component {
     constructor(props) {
         super(props);
 
-    }
-
-    render() {
-        return (
-            // The holder for notification. Has .hidden class if the props say so
-            <div className={`notification-holder ${this.props.hidden ? "hidden" : ""}`}>
-                {/* props.close is the function to close the notification */}
-                <div className="overlay" onClick={this.props.close}></div>
-                <div className="notification has-text-centered">
-                    <button className="delete" onClick={this.props.close}></button>
-                    {/* The notification content */}
-                    {this.props.message}
-                </div>
-            </div>
-        );
-    }
-}
-
-// The panel that hold all the components
-// The core part of the app
-class Panel extends React.Component {
-    constructor(props) {
-        super(props);
-
-        // The state variables
         this.state = {
-            // Username stored
             username: "",
-            // Password stored
-            password: "",
-            // Condition: "danger", "", "success": state of the input component
-            // Message: the message to be displayed with the input component
             usernameCondition: "",
             usernameMessage: "default",
-            passwordCondition: "",
-            passwordMessage: "default",
-            // If the app is loading
-            loading: false,
-            // If the notification is to be shown
-            notification: false,
-            // The message for the notification
-            notificationMessage: ""
+            userLoading: false
         }
-
-        // To change the state and then perform necessary actions via a callback 
         this.setValue = this.setValue.bind(this);
-        // A very specific function to submit the form
-        this.submitForm = this.submitForm.bind(this);
-        // Functions to show and hide the notifications
-        this.openNotification = this.openNotification.bind(this);
-        this.closeNotification = this.closeNotification.bind(this);
-    }
-
-    openNotification(message = "") {
-        this.setState({ notification: true, notificationMessage: message });
-    }
-
-    closeNotification() {
-        this.setState({ notification: false });
     }
 
     setValue(field, value, callback) {
@@ -262,108 +209,29 @@ class Panel extends React.Component {
         });
     }
 
-    /* Very specific function for form submission */
-    submitForm(event) {
-        // If the username is empty or the username RegEx fails
-        if (!this.state.username || !this.props.userRegex.test(this.state.username)) {
-            this.openNotification("Invalid username. Please ensure that the username is filled correctly and submit again.");
-            return;
-        }
-
-        // If the password is empty
-        if (!this.state.password) {
-            this.openNotification("The password cannot be left empty.");
-            return;
-        }
-
-        // If the fields are valid
-        this.setState({
-            loading: true,
-            usernameCondition: "",
-            passwordCondition: "",
-            usernameMessage: "default",
-            passwordMessage: "default"
-        }, () => {
-            // Submit to backend here, via AJAX
-            alert("Submitting the responses")
-        });
-
-    }
-
-    /* Can be optimised */
     render() {
         return (
-            <section>
-                {/* Notification component */}
-                <Notification hidden={!this.state.notification} message={this.state.notificationMessage} close={this.closeNotification} />
-                {/* The panel itself */}
-                <div className="panel hover-effects">
-                    {/* The holder that holds the components */}
-                    <article className="holder">
-                        {/* Holder title */}
-                        <h1 className="title has-text-weight-light is-size-2-mobile is-size-1-tablet has-text-centered is-unselectable">Log In</h1>
-                        <form id="LogIn">
-                            {/* The  username and password input components*/}
-                            <Input title="Username" name="username" loading={this.state.userLoading} placeholder="Enter your username" type="text"
-                                condition={this.state.usernameCondition} disabled={this.state.loading} value={this.state.username}
-                                peek={false} icon="fa-user" messages={{ default: "", error: "There was an error", regex: "Invalid Username", empty: "Username cannot be empty" }} currentMessage={this.state.usernameMessage}
-                                handler={this.setValue} regex={this.props.userRegex} />
-                            <Input title="Password" name="password" placeholder="Enter your password" type="password"
-                                condition={this.state.passwordCondition} disabled={this.state.loading}
-                                value={this.state.password} peek={true} icon="fa-lock" messages={{ default: "", error: "There was an error", empty: "Password cannot be empty" }} currentMessage={this.state.passwordMessage} handler={this.setValue} />
-                        </form>
-                        {/* The navigation links for other pages */}
-                        <nav className="level">
-                            {/* Disable the links if the app is in loading state */}
-                            <div className="level-left">
-                                <div className="level-item">
-                                    <a href={`${this.state.loading ? "#" : "path.html"}`} className="help">New user?&nbsp;&nbsp;Register here</a>
-                                </div>
-                            </div>
-                            <div className="level-right">
-                                <div className="level-item">
-                                    <a href={`${this.state.loading ? "#" : "path.html"}`} className="help">Continue without logging in</a>
-                                </div>
-                            </div>
-                        </nav>
-                        {/* Button list with centering */}
-                        {/* Can add more buttons in future */}
-                        <div className="buttons is-centered">
-                            {/* The submit button */}
-                            <button className={`button is-link${this.state.loading ? " is-loading" : ""}`} onClick={this.submitForm} >Submit</button>
-                        </div>
-                    </article>
+            <div className="app hero is-fullheight">
+                <div className="hero-body">
+                    <form className="box">
+                        <h1 className="title has-text-weight-light is-size-2-mobile is-size-1-tablet has-text-centered is-unselectable">Sign Up</h1>
+                        <Input title="Username" name="username" loading={this.state.userLoading} placeholder="Enter your username" type="text"
+                            condition={this.state.usernameCondition} disabled={false} value={this.state.username}
+                            peek={false} icon="fa-user" messages={{ default: "Only alphanumeric and underscore characters allowed", error: "There was an error", regex: "Invalid character", empty: "Username cannot be empty" }} currentMessage={this.state.usernameMessage}
+                            handler={this.setValue} regex={this.props.userRegex} />
+                    </form>
                 </div>
-            </section>
-        );
-    }
-}
-
-// The overall app
-class App extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        return (
-            // The app
-            <div className="app">
-                {/* The panel that holds all the page's components */}
-                <Panel userRegex={this.props.userRegex} />
             </div>
         );
     }
+
 }
 
-window.onload = () => {
-    // Step 1, make the node root in the DOM
+
+window.onload = (event) => {
     let node = document.createElement("main");
-    node.setAttribute("id", "root");
+    node.id = "root";
     document.querySelector("body").prepend(node);
 
-    // Use react
-    // Render the app. The Regular Epxression for the username field is given
     ReactDOM.render(<App userRegex={/^\w+$/} />, node);
-
 }
