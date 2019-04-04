@@ -264,9 +264,9 @@ class Panel extends React.Component {
 
     /* Very specific function for form submission */
     submitForm(event) {
-        // If the username is empty or the username RegEx fails
-        if (!this.state.username || !this.props.userRegex.test(this.state.username)) {
-            this.openNotification("Invalid username. Please ensure that the username is filled correctly and submit again.");
+        // If the username is empty
+        if (!this.state.username) {
+            this.openNotification("The username cannot be left empty.");
             return;
         }
 
