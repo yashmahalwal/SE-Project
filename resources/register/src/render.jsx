@@ -153,9 +153,9 @@ class Input extends React.Component {
         }
 
 
-        // The field is empty,
+        // If the field is empty
         if (!this.props.value) {
-            // If the field is not empty
+            // If the field is not optional
             if (!this.props.optional)
                 this.props.handler(this.props.name, this.props.value, callback1("danger", "empty"));
             return;
