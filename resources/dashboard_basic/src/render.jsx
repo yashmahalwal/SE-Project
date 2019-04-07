@@ -7,6 +7,22 @@ function prevent(event) {
     event.preventDefault();
 }
 
+let serialize = function (obj, prefix) {
+    var str = [],
+        p;
+    for (p in obj) {
+        if (obj.hasOwnProperty(p)) {
+            var k = prefix ? prefix + "[" + p + "]" : p,
+                v = obj[p];
+            str.push((v !== null && typeof v === "object") ?
+                serialize(v, k) :
+                encodeURIComponent(k) + "=" + encodeURIComponent(v));
+        }
+    }
+    return str.join("&");
+}
+
+
 function ajax(url, callbackSuccess, callbackError, method = "GET") {
     let xhr = new XMLHttpRequest();
     xhr.open(method, url);
@@ -23,186 +39,6 @@ function ajax(url, callbackSuccess, callbackError, method = "GET") {
         }
     }
     xhr.onerror = callbackError;
-}
-// The eye icon to peek visibility of the passoword
-class Peek extends React.Component {
-    constructor(props) {
-        super(props);
-        // Maintain the icon as the state, default is eye
-        this.state = {
-            icon: "fa-eye"
-        }
-
-        // The function to handle click event
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    handleClick() {
-        this.setState((state, props) => {
-            // Toggle the icon b/w eye and eye slash
-            if (state.icon === "fa-eye")
-                return ({ icon: "fa-eye-slash" });
-            else
-                return ({ icon: "fa-eye" });
-        }, () => {
-            // Then, do the designated operations, given by props.handleClick
-            this.props.handleClick();
-        });
-    }
-
-    render() {
-        return (
-            // Icon holder and the icon
-            <div className="icon is-small is-right" onClick={this.handleClick}>
-                {/* Setting the icon with the state. Also, disable the icon if the props say so */}
-                <i className={`fas peek ${this.state.icon} ${this.props.disabled ? " disabled" : ""}`}></i>
-            </div>
-        );
-    }
-}
-
-// The input component
-class Input extends React.Component {
-    constructor(props) {
-        super(props);
-
-        // The type is maintained in the state so as to 
-        // Allow toggle for the password field
-        this.state = {
-            type: this.props.type
-        }
-
-        // If peek icon is to be rendered
-        this.renderPeek = this.renderPeek.bind(this);
-        // Function to toggle between the text and password types
-        this.toggleType = this.toggleType.bind(this);
-        // Function to handle change
-        this.handleChange = this.handleChange.bind(this);
-        // Function to render the required input type
-        this.renderInput = this.renderInput.bind(this);
-        // When an input loses focus
-        this.focusOut = this.focusOut.bind(this);
-    }
-
-    handleChange(event) {
-        // Get the new value
-        let value = event.target.value;
-        // Set the state of component: appropriate condition and message
-        let callback1 = (condition = "", message = "default") => {
-            this.props.handler(this.props.name + "Condition", condition, () => callback2(message));
-        }
-        // Set the message for the component
-        let callback2 = (message) => {
-            this.props.handler(this.props.name + "Message", message, null);
-        }
-
-        // If there is no value, set the state to daner with empty error
-        if (!value) {
-            this.props.handler(this.props.name, value, callback1("danger", "empty"));
-            return;
-        }
-
-        // If a RegEx is defined
-        if (this.props.regex) {
-            // If the value violates that RegEx
-            if (!this.props.regex.test(value)) {
-                // Do not update the value of the field.
-                // But show the regex error
-                callback1("danger", "regex");
-            }
-            else
-                // Simply set the value and set the state of component to default
-                this.props.handler(this.props.name, value, callback1);
-        } else
-            // Simply set the value and set the state of component to default
-            this.props.handler(this.props.name, value, callback1);
-    }
-
-    renderPeek() {
-        // If the props.peek is true, render the peek. Else, render nothing
-        if (this.props.peek == true) {
-            return (
-                <Peek handleClick={this.toggleType} disabled={this.props.disabled} />
-            );
-        } else
-            return null;
-    }
-
-    toggleType() {
-        // Toggle the state between the type text and password
-        if (this.state.type === "text") {
-            this.setState({ type: "password" });
-        } else if (this.state.type === "password") {
-            this.setState({ type: "text" });
-        }
-    }
-
-    renderInput() {
-        // If the type is password, prevent cut, copy, paste
-        let handler = (this.props.type === "password" ? prevent : () => { })
-        // If the input is disabled, add the attribute
-        // onBlur, when the component loses focus, set the state of 
-        // Input element again. That is to remove any invalid errors that might still be showing
-        if (this.props.disabled)
-            return (
-                <input disabled onBlur={this.focusOut} onCopy={handler} className={`input${this.props.condition === "" ? "" : (" is-" + this.props.condition)}`} type={this.state.type}
-                    placeholder={this.props.placeholder} name={this.props.name} value={this.props.value} onChange={this.handleChange} />
-            );
-        else
-            return (
-                <input onBlur={this.focusOut} onCut={handler} onCopy={handler} onPaste={handler} className={`input${this.props.condition === "" ? "" : (" is-" + this.props.condition)}`} type={this.state.type}
-                    placeholder={this.props.placeholder} name={this.props.name} value={this.props.value} onChange={this.handleChange} />
-            );
-    }
-
-    focusOut(event) {
-        // The field is empty, do nothing
-        if (!this.props.value)
-            return;
-        let callback1 = (condition = "", message = "default") => {
-            this.props.handler(this.props.name + "Condition", condition, () => callback2(message));
-        }
-        let callback2 = (message) => {
-            this.props.handler(this.props.name + "Message", message, null);
-        }
-        // If a regex is given
-        if (this.props.regex)
-            // If the value of the field passes the regex test
-            if (this.props.regex.test(this.props.value))
-                this.props.handler(this.props.name, this.props.value, callback1);
-
-    }
-
-    render() {
-        return (
-            <div className="field is-horizontal">
-                <div className="field-label is-normal">
-                    {/* Title of the field */}
-                    <label className="label">{this.props.title}</label>
-                </div>
-                <div className="field-body">
-                    <div className="field">
-                        {/* The input element itself: is set to loading is props say so */}
-                        <div className={"control has-icons-left has-icons-right" + (this.props.loading ? " is-loading" : "")}>
-                            {/* Render input as needed */}
-                            {this.renderInput()}
-                            {/* The icon on the left is as said by props */}
-                            <div className="icon is-small is-left">
-                                <i className={`fas ${this.props.icon}`}></i>
-                            </div>
-                            {/* Render peek as needed */}
-                            {this.renderPeek()}
-                        </div>
-                        {/* The message with input */}
-                        <p className={`help is-unselectable ${this.props.condition === "" ? "" : (" is-" + this.props.condition)}`}>
-                            {this.props.messages[this.props.currentMessage]}&nbsp;
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-        );
-    }
 }
 
 // The notification component
@@ -242,8 +78,9 @@ class MenuItem extends React.Component {
         this.handleClick = this.handleClick.bind(this)
     }
 
-    handleClick() {
+    handleClick(event) {
         this.props.activateFunction(this.props.value);
+        this.props.menuToggle(event, false);
     }
 
     render() {
@@ -259,28 +96,47 @@ class MenuItem extends React.Component {
 class Menu extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            mobileActive: false
+        }
         this.renderItems = this.renderItems.bind(this);
+        this.handleClick = this.handleClick.bind(this);
     }
 
     renderItems() {
         return (
             this.props.itemList.map(item => (
-                <MenuItem title={item.title} icon={item.icon} active={item.value == this.props.active ? true : false} key={item.value} value={item.value} activateFunction={this.props.activateFunction} />
+                <MenuItem title={item.title} icon={item.icon} active={item.value == this.props.active ? true : false} key={item.value} value={item.value} activateFunction={this.props.activateFunction} menuToggle={this.handleClick} />
             ))
         );
     }
 
+    handleClick(event, value = null) {
+        if (!value)
+            value = !this.state.mobileActive;
+        this.setState({ mobileActive: value });
+    }
+
     render() {
         return (
-            <nav className="menu">
-                <MenuInfo title={this.props.title} subtitle={this.props.subtitle} />
-                <div>
-                    <h5 className="menu-label">Dashboard</h5>
-                    <ul className="menu-list">
-                        {this.renderItems()}
-                    </ul>
+            <div>
+                <div className={`button is-link menu-button is-hidden-tablet ${this.state.mobileActive ? "hidden" : ""}`} onClick={this.handleClick}>
+                    <span className="icon"><i className="fas fa-bars"></i></span>
                 </div>
-            </nav>
+                <div className={`menu-holder ${this.state.mobileActive ? "is-active" : ""}`}>
+                    <div className="menu-overlay" onClick={this.handleClick}>
+                    </div>
+                    <nav className="menu">
+                        <MenuInfo title={this.props.title} subtitle={this.props.subtitle} />
+                        <div>
+                            <h5 className="menu-label">Dashboard</h5>
+                            <ul className="menu-list">
+                                {this.renderItems()}
+                            </ul>
+                        </div>
+                    </nav>
+                </div>
+            </div>
         );
     }
 }
@@ -312,10 +168,16 @@ class App extends React.Component {
             notification: false,
             notificationMessage: "",
             trending: [],
+            searchText: "",
+            searchState: "",
+            searchMessage: "",
+            search: []
         }
         this.setActive = this.setActive.bind(this);
         this.renderContent = this.renderContent.bind(this);
         this.closeNotification = this.closeNotification.bind(this);
+        this.handleSearchChange = this.handleSearchChange.bind(this);
+        this.submitSearch = this.submitSearch.bind(this);
     }
 
     /* Specific function */
@@ -340,7 +202,7 @@ class App extends React.Component {
             if (value != "search")
                 this.setState({ loading: true }, () => {
                     // Get data from server
-                    ajax(`http://127.0.0.1:3000/article/${value}`, (data) => {
+                    ajax(`http://127.0.0.1:3000/article?field=${value}`, (data) => {
                         this.setState({ loading: false }, () => {
                             callback(value, data);
                         });
@@ -355,8 +217,34 @@ class App extends React.Component {
         this.setState({ notification: false });
     }
 
+    /* Specific function */
+    handleSearchChange(event) {
+        this.setState({ searchText: event.target.value, searchState: "", searchMessage: "" });
+    }
+
+    /* Specific function */
+    submitSearch() {
+        if (!this.state.searchText) {
+            this.setState({
+                searchState: "danger",
+                searchMessage: "Please enter the title"
+            });
+            return;
+        }
+
+        // If we are here, the text is valid
+        this.setState({ loading: true }, () => {
+
+            ajax("http://127.0.0.1:3000/article?" + serialize({ field: 'search', value: this.state.searchText }), (data) => {
+                this.setState({ loading: false, search: data.articles })
+            }, () => {
+                this.setState({ loading: false, notification: true, notificationMessage: "There was an error processing your request" });
+            }, "GET");
+        });
+    }
+
     componentDidMount() {
-        this.setActive("trending");
+        this.setActive(this.props.active);
     }
 
     /* Specific function */
@@ -403,7 +291,63 @@ class App extends React.Component {
                     </section>
                 );
             case "search":
-                return (<h1 className="title">Search</h1>);
+                return (
+                    <section>
+                        <h1 className="title has-text-centered">Search for an article</h1>
+
+                        <div className="field is-horizontal">
+                            <div className="field-body">
+                                <div className="field">
+                                    <div className="field has-addons">
+                                        <p className="control is-expanded">
+                                            <input className={`input ${this.state.searchState ? ("is-" + this.state.searchState) : ""}`} type="text" placeholder="Enter title of the article" value={this.state.searchText} onChange={this.handleSearchChange} />
+                                        </p>
+                                        <p className="control">
+                                            <a className="button is-link" onClick={this.submitSearch}>
+                                                <span className="icon"><i className="fas fa-search"></i></span>
+                                            </a>
+                                        </p>
+                                    </div>
+                                    <p className={`help ${this.state.searchState ? ("is-" + this.state.searchState) : ""}`}>&nbsp;{this.state.searchMessage}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {this.state.search.map(item => (
+                            <article className="media box" key={item.id}>
+                                <figure className="media-left">
+                                    <p className="image is-64x64">
+                                        <img src="https://bulma.io/images/placeholders/128x128.png" />
+                                    </p>
+                                </figure>
+                                <div className="media-content">
+                                    <div className="content">
+                                        <p>
+                                            <strong>{item.title}</strong> <small>@johnsmith</small> <small>31m</small>
+                                            <br />
+                                            {item.content}
+                                        </p>
+                                    </div>
+                                    <nav className="level is-mobile">
+                                        <div className="level-left">
+                                            <a className="level-item">
+                                                <span className="icon is-small"><i className="fas fa-reply"></i></span>
+                                            </a>
+                                            <a className="level-item">
+                                                <span className="icon is-small"><i className="fas fa-retweet"></i></span>
+                                            </a>
+                                            <a className="level-item">
+                                                <span className="icon is-small"><i className="fas fa-heart"></i></span>
+                                            </a>
+                                        </div>
+                                    </nav>
+                                </div>
+                                <div className="media-right">
+                                    <button className="delete"></button>
+                                </div>
+                            </article>
+                        ))}
+                    </section>
+                );
         }
     }
 
@@ -432,6 +376,6 @@ window.onload = () => {
 
     // Use react
     // Render the app. The Regular Epxression for the username field is given
-    ReactDOM.render(<App active="trending" />, node);
+    ReactDOM.render(<App active="search" />, node);
 
 }

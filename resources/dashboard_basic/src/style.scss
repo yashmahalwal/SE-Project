@@ -10,10 +10,7 @@
 @import "../../../node_modules/bulma/sass/components/media.sass";
 @import "../../../node_modules/bulma/sass/elements/box.sass";
 @import "../../../node_modules/bulma/sass/components/level.sass";
-
-
-
-
+@import "../../../node_modules/bulma/sass/elements/form.sass";
 
 /* Basic styling */
 html {
@@ -104,7 +101,7 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -133,7 +130,7 @@ html {
     align-items: center;
     justify-content: center;
     background: rgba($black, 0.8);
-    z-index: 1000;
+    z-index: 90;
     transition: opacity 300ms, visibility 300ms;
 
     .notification {
@@ -166,6 +163,7 @@ html {
         bottom: 0;
         left: 0;
         width: 20vw;
+        z-index: 80;
         overflow: auto;
         background: #f7f8f9;
         padding: 20vh 10px;
@@ -178,6 +176,12 @@ html {
         min-height: 100vh;
         padding: 50px 20px;
         margin-left: 20vw;
+
+        .field.is-horizontal {
+            margin-left: auto;
+            margin-right: auto;
+            width: 60%;
+        }
     }
 
     .media.box {
@@ -193,6 +197,82 @@ html {
 
         .my-content {
             margin-left: 25vw;
+        }
+    }
+}
+
+@media (max-width: $tablet) {
+    .app {
+
+        .menu-button {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            transition: transform 300ms;
+
+            &.hidden {
+                transform: scale(0);
+            }
+        }
+
+        .menu-holder {
+            position: fixed;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 80;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 500ms, visibility 500ms;
+
+            &.is-active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .menu-overlay {
+                cursor: pointer;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba($black, 0.8);
+            }
+        }
+
+
+        .menu {
+            width: auto;
+            height: auto;
+            padding: 0;
+            top: unset;
+            bottom: unset;
+            left: unset;
+            position: relative;
+            z-index: unset;
+            background: #fff;
+            width: 90%;
+            max-width: 450px;
+            padding: 10px 5px;
+            border-radius: 10px;
+
+            .info {
+                display: none;
+            }
+        }
+
+        .my-content {
+            margin-left: 0;
+
+            .field.is-horizontal {
+                width: 80%;
+                min-width: 300px;
+            }
         }
     }
 }
