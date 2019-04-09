@@ -1,5 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import $ from "jquery/src/core";
+import 'jquery/src/ajax';
+import 'jquery/src/ajax/xhr';
 
 // To prevent default action
 function prevent(event) {
@@ -69,12 +72,16 @@ class Input extends React.Component {
     handleChange(event) {
         // Get the new value
         let value = event.target.value;
+        let callback3 = () => {
+            if (this.props.coupling) this.props.coupling();
+            if (this.props.validator) this.props.validator();
+        }
         // Set the state of component: appropriate condition and message
-        let callback1 = (condition = "", message = "default", callback3 = this.props.coupling) => {
-            this.props.handler(this.props.name + "Condition", condition, () => callback2(message, callback3));
+        let callback1 = (condition = "", message = "default") => {
+            this.props.handler(this.props.name + "Condition", condition, () => callback2(message));
         }
         // Set the message for the component
-        let callback2 = (message, callback3 = null) => {
+        let callback2 = (message) => {
             this.props.handler(this.props.name + "Message", message, callback3);
         }
 
@@ -144,11 +151,16 @@ class Input extends React.Component {
 
     focusOut(event) {
         // Set the state of component: appropriate condition and message
-        let callback1 = (condition = "", message = "default", callback3 = this.props.coupling) => {
+        let callback3 = () => {
+            if (this.props.coupling) this.props.coupling();
+            if (this.props.validator) this.props.validator();
+        }
+
+        let callback1 = (condition = "", message = "default") => {
             this.props.handler(this.props.name + "Condition", condition, () => callback2(message, callback3));
         }
         // Set the message for the component
-        let callback2 = (message, callback3 = null) => {
+        let callback2 = (message) => {
             this.props.handler(this.props.name + "Message", message, callback3);
         }
 
@@ -205,6 +217,47 @@ class Input extends React.Component {
     }
 }
 
+// The notification component
+class Notification extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            // The holder for notification. Has .hidden class if the props say so
+            <div className={`notification-holder ${this.props.hidden ? "hidden" : ""}`}>
+                {/* props.close is the function to close the notification */}
+                <div className="overlay" onClick={this.props.close}></div>
+                <div className="notification has-text-centered">
+                    <button className="delete" onClick={this.props.close}></button>
+                    {/* The notification content */}
+                    {this.props.message}
+                </div>
+            </div>
+        );
+    }
+}
+
+
+class Preloader extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div className={`preloader-overlay ${this.props.active ? "is-active" : ""}`}>
+                <div className="spinner">
+                    <div className="double-bounce1"></div>
+                    <div className="double-bounce2"></div>
+                </div>
+            </div>
+        );
+    }
+
+}
+
 class App extends React.Component {
     constructor(props) {
         super(props);
@@ -220,15 +273,49 @@ class App extends React.Component {
             usernameCondition: "",
             usernameMessage: "default",
             userLoading: false,
+            userValidate: false,
             password: "",
             passwordCondition: "",
             passwordMessage: "default",
             repassword: "",
             repasswordCondition: "",
-            repasswordMessage: "default"
+            repasswordMessage: "default",
+            loading: false,
+            notification: false,
+            notificationMessage: ""
         }
         this.setValue = this.setValue.bind(this);
         this.couplePasswords = this.couplePasswords.bind(this);
+        this.submitForm = this.submitForm.bind(this);
+        this.validateUser = this.validateUser.bind(this);
+        this.closeNotification = this.closeNotification.bind(this);
+    }
+
+    validateUser() {
+        if (!this.state.username) return;
+        // Set the field to loading
+        this.setState({ userLoading: true }, () => {
+            // Send request to the server
+            $.post("/checkUser", { field: 'checkUsername', value: this.state.username }).done(data => {
+                // If the sent value is same as the current value
+                if (data.value != this.state.username) return;
+
+                if (!data.sql) {
+                    this.setState({ usernameCondition: "danger", usernameMessage: "dberr", userValidate: false });
+                    return;
+                }
+
+                if (data.valid)
+                    this.setState({ usernameCondition: "success", usernameMessage: "userAvail", userValidate: true });
+                else
+                    this.setState({ usernameCondition: "danger", usernameMessage: "userNotAvail", userValidate: false });
+
+            }).fail(() => {
+                this.setState({ usernameCondition: "danger", usernameMessage: "serverErr", userValidate: false });
+            }).always(() =>
+                this.setState({ userLoading: false })
+            );
+        });
     }
 
     setValue(field, value, callback) {
@@ -238,6 +325,54 @@ class App extends React.Component {
             if (callback)
                 callback();
         });
+    }
+
+    submitForm() {
+        let err = false;
+        const input = {
+            username: this.state.username,
+            password: this.state.password,
+            repassword: this.state.repassword,
+            email: this.state.email,
+            name: this.state.name,
+            field: 'createUser'
+        }
+
+        // Check if any of the fields is empty
+        for (let i in input) {
+            if (!input[i]) {
+                this.setState({ [i + "Condition"]: "danger", [i + "Message"]: "empty" });
+                err = true;
+            }
+        }
+
+        if (err) return;
+
+        // Message already showing
+        if (!this.props.emailRegex.test(input.email)) return;
+        // Message already showing
+        if (input.password != input.repassword) return;
+        if (this.state.userLoading) {
+            this.setState({ notification: true, notificationMessage: "Please wait for username validation." });
+            return;
+        }
+        if (!this.state.userValidate) {
+            this.setState({ notification: true, notificationMessage: "Username validation failed. This probably occured because the username was taken or the server could not validate username." });
+            return;
+        }
+
+
+        this.setState({ loading: true }, () => {
+            $.post("/checkUser", input).done(data => {
+                if (!data.sql)
+                    this.setState({ notification: true, notificationMessage: "There was an error with the database. Please try later." });
+                else {
+                    window.open("/dashboard", "_self");
+                    return;
+                }
+            }).fail(err => this.setState({ notification: true, notificationMessage: "Could not connect to server. Please try later." })).always(() => this.setState({ loading: false }));
+        })
+
     }
 
     /* Very specific function to couple the password fields */
@@ -254,9 +389,16 @@ class App extends React.Component {
 
     }
 
+    closeNotification() {
+        this.setState({ notification: false });
+    }
+
+
     render() {
         return (
             <div className="app hero is-fullheight">
+                <Notification message={this.state.notificationMessage} hidden={!this.state.notification} close={this.closeNotification} />
+                <Preloader active={this.state.loading} />
                 <div className="hero-body">
                     <form className="box">
                         <h1 className="title has-text-weight-light is-size-2-mobile is-size-1-tablet has-text-centered is-unselectable">Sign Up</h1>
@@ -265,8 +407,8 @@ class App extends React.Component {
                             peek={false} icon="fa-info-circle" messages={{ default: "", error: "There was an error", regex: "", empty: "Name cannot be empty" }} currentMessage={this.state.nameMessage}
                             handler={this.setValue} optional={false} />
                         <Input title="Username" name="username" loading={this.state.userLoading} placeholder="This is how people see you." type="text"
-                            condition={this.state.usernameCondition} disabled={false} value={this.state.username}
-                            peek={false} icon="fa-user" messages={{ default: "Only alphanumeric and underscore characters allowed", error: "There was an error", regex: "Only alphanumeric and underscore characters allowed", empty: "Username cannot be empty" }} currentMessage={this.state.usernameMessage}
+                            condition={this.state.usernameCondition} disabled={false} value={this.state.username} validator={this.validateUser}
+                            peek={false} icon="fa-user" messages={{ default: "Only alphanumeric and underscore characters allowed", error: "There was an error", regex: "Only alphanumeric and underscore characters allowed", empty: "Username cannot be empty", dbErr: "There was an error with database. Try later", userAvail: "The username is available", userNotAvail: "The username is not available", serverErr: "Server could not process your request. Try later" }} currentMessage={this.state.usernameMessage}
                             handler={this.setValue} regex={this.props.userRegex} preventRegex={true} optional={false} />
                         <Input title="Email" name="email" placeholder="We'll reach you here." type="text"
                             condition={this.state.emailCondition} disabled={false} value={this.state.email}
@@ -281,7 +423,7 @@ class App extends React.Component {
                             peek={false} icon="fa-check-double" messages={{ default: "", error: "There was an error", regex: "Invalid characters", empty: "This field cannot be empty", matchSuccess: "The passwords match", matchFailure: "The passwords do not match" }} currentMessage={this.state.repasswordMessage}
                             handler={this.setValue} optional={false} regex={this.props.passwordRegex} preventRegex={true} coupling={this.couplePasswords} couple="password" coupleValue={this.state.password} />
                         <div className="buttons is-centered">
-                            <div className="button is-link">Submit</div>
+                            <div className="button is-link" onClick={this.submitForm}>Submit</div>
                         </div>
                     </form>
                 </div>

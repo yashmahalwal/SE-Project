@@ -1,5 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import $ from "jquery/src/core";
+import 'jquery/src/ajax';
+import 'jquery/src/ajax/xhr';
+
 
 // To prevent default action
 function prevent(event) {
@@ -264,17 +268,18 @@ class Panel extends React.Component {
 
     /* Very specific function for form submission */
     submitForm(event) {
+        let err = false;
         // If the username is empty
         if (!this.state.username) {
-            this.openNotification("The username cannot be left empty.");
-            return;
+            this.setState({ usernameCondition: "danger", usernameMessage: "empty", notification: true, notificationMessage: "Please check the form again." });
+            err = true;
         }
-
         // If the password is empty
         if (!this.state.password) {
-            this.openNotification("The password cannot be left empty.");
-            return;
+            this.setState({ passwordCondition: "danger", passwordMessage: "empty", notification: true, notificationMessage: "Please check the form again." });
+            err = true;
         }
+        if (err) return;
 
         // If the fields are valid
         this.setState({
@@ -285,7 +290,23 @@ class Panel extends React.Component {
             passwordMessage: "default"
         }, () => {
             // Submit to backend here, via AJAX
-            alert("Submitting the responses")
+            $.post("/checkUser", { field: "logIn", username: this.state.username, password: this.state.password }).done(data => {
+                if (!data.sql) {
+                    this.setState({ notification: true, notificationMessage: "There was an error connecting to the database. Try again later." });
+                    return;
+                }
+
+                if (data.valid) {
+                    window.open("/dashboard", "_self");
+                    return;
+                }
+
+                this.setState({ notification: true, notificationMessage: "Your credentials were invalid." });
+            }).fail(err => {
+                this.setState({ notification: true, notificationMessage: "Server could not process your request. Try again later." });
+            }).always(() => {
+                this.setState({ loading: false });
+            });
         });
 
     }
@@ -317,12 +338,12 @@ class Panel extends React.Component {
                             {/* Disable the links if the app is in loading state */}
                             <div className="level-left">
                                 <div className="level-item">
-                                    <a href={`${this.state.loading ? "#" : "path.html"}`} className="help">New user?&nbsp;&nbsp;Register here</a>
+                                    <a href={`${this.state.loading ? "#" : "/register"}`} className="help">New user?&nbsp;&nbsp;Register here</a>
                                 </div>
                             </div>
                             <div className="level-right">
                                 <div className="level-item">
-                                    <a href={`${this.state.loading ? "#" : "path.html"}`} className="help">Continue without logging in</a>
+                                    <a href={`${this.state.loading ? "#" : "/dashboard"}`} className="help">Continue without logging in</a>
                                 </div>
                             </div>
                         </nav>

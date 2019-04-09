@@ -1,44 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
-
+import $ from "jquery/src/core";
+import 'jquery/src/ajax';
+import 'jquery/src/ajax/xhr';
 
 // To prevent default action
 function prevent(event) {
     event.preventDefault();
-}
-
-let serialize = function (obj, prefix) {
-    var str = [],
-        p;
-    for (p in obj) {
-        if (obj.hasOwnProperty(p)) {
-            var k = prefix ? prefix + "[" + p + "]" : p,
-                v = obj[p];
-            str.push((v !== null && typeof v === "object") ?
-                serialize(v, k) :
-                encodeURIComponent(k) + "=" + encodeURIComponent(v));
-        }
-    }
-    return str.join("&");
-}
-
-
-function ajax(url, callbackSuccess, callbackError, method = "GET") {
-    let xhr = new XMLHttpRequest();
-    xhr.open(method, url);
-    xhr.send();
-
-    xhr.onreadystatechange = () => {
-        if (xhr.readyState == XMLHttpRequest.DONE) {
-            if (xhr.status != 404) {
-                let json = JSON.parse(xhr.responseText);
-                callbackSuccess(json);
-            } else {
-                callbackError();
-            }
-        }
-    }
-    xhr.onerror = callbackError;
 }
 
 // The notification component
@@ -67,7 +35,7 @@ class MenuInfo extends React.Component {
     render() {
         return (<div className="info has-text-centered">
             <h1 className="has-text-weight-bold is-size-3">{this.props.title ? this.props.title : "Welcome"}</h1>
-            <h3 className="is-size-5">{this.props.subtitle ? this.props.subtitle : <span><a href="">Sign In</a> to do more</span>}</h3>
+            <h3 className="is-size-5">{this.props.subtitle ? this.props.subtitle : <span><a href="/">Sign In</a> to do more</span>}</h3>
         </div>);
     }
 }
@@ -132,6 +100,7 @@ class Menu extends React.Component {
                             <h5 className="menu-label">Dashboard</h5>
                             <ul className="menu-list">
                                 {this.renderItems()}
+                                <li><a href="/logout" className={this.props.userLogged ? "" : "is-hidden"}><span className="icon"><i className="fas fa-sign-out-alt"></i></span>&nbsp;&nbsp;Log Out</a></li>
                             </ul>
                         </div>
                     </nav>
@@ -159,10 +128,200 @@ class Preloader extends React.Component {
 
 }
 
+/* Change to update state with votes */
+class Article extends React.Component {
+    constructor(props) {
+        super(props);
+        this.date = new Date(Date.parse(this.props.item.dateOfSub));
+        var dd = String(this.date.getDate()).padStart(2, '0');
+        var mm = String(this.date.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = this.date.getFullYear();
+
+        this.date = mm + '/' + dd + '/' + yyyy;
+
+        this.state = {
+            upvotes: 0,
+            downvotes: 0,
+            status: "",
+            error: "",
+            loading: false
+        }
+        this.updateVote = this.updateVote.bind(this);
+        this.makeUpvote = this.makeUpvote.bind(this);
+        this.makeDownVote = this.makeDownVote.bind(this);
+    }
+
+    updateVote() {
+        this.setState({ loading: true }, () => {
+
+            $.get("/article", { field: "getVotes", id: this.props.item.id }).done((data) => {
+                if (!data.sql) {
+                    this.setState({ error: 'The votes could not be loaded' });
+                    return;
+                }
+                let status = "";
+
+                if (data.downvotes > data.upvotes)
+                    status = "invalid";
+                else if (data.downvotes < data.upvotes)
+                    status = "valid";
+                this.setState({ upvotes: data.upvotes, downvotes: data.downvotes, error: "", status: status });
+            }).fail(() => {
+                this.setState({ error: 'The server failed to respond' });
+            }).always(() => this.setState({ loading: false }));
+        });
+    }
+
+    componentDidMount() {
+        this.updateVote();
+    }
+
+    makeUpvote() {
+        this.setState({ loading: true }, () => {
+
+            $.get("/article", { field: "makeVote", id: this.props.item.id, type: 'upvote' }).done((data) => {
+                if (!data.sql) {
+                    this.setState({ error: 'The vote could not made' });
+                    return;
+                }
+            }).fail(() => {
+                this.setState({ error: 'The server failed to respond' });
+            }).always(this.updateVote);
+        });
+    }
+
+    makeDownVote() {
+        this.setState({ loading: true }, () => {
+
+            $.get("/article", { field: "makeVote", id: this.props.item.id }).done((data) => {
+                if (!data.sql) {
+                    this.setState({ error: 'The votes could not be loaded' });
+                    return;
+                }
+            }).fail(() => {
+                this.setState({ error: 'The server failed to respond' });
+            }).always(this.updateVote);
+        });
+    }
+
+    render() {
+        return (
+            <article className="media box" key={this.props.item.id}>
+                <div className="media-content">
+                    <div className="content">
+                        <p>
+                            <strong>{this.props.item.title}</strong> <small>@{this.props.item.author}</small>&nbsp;&nbsp;<small>{this.date}</small>
+                            <br />
+                            {this.props.item.description}
+
+                        </p>
+                        <a target="_blank" href={this.props.item.link}>{this.state.error}&nbsp;</a>
+                    </div>
+                    <nav className="level is-mobile">
+                        <div className="level-left">
+                            <a onClick={this.makeUpvote} className={`level-item ${(!this.props.userLogged || this.state.loading) ? "disabled" : ""}`}>
+                                <span className="icon is-small"><i className="fas fa-thumbs-up"></i></span>&nbsp;{this.state.upvotes}
+                            </a>
+                            <a onClick={this.makeDownVote} className={`level-item ${(!this.props.userLogged || this.state.loading) ? "disabled" : ""}`}>
+                                <span className="icon is-small"><i className="fas fa-thumbs-down"></i></span>&nbsp;{this.state.downvotes}
+                            </a>
+                            <div className={`button is-small ${this.state.loading ? 'is-loading' : ""} is-white`}></div>
+                            <span className={`level-item is-unselectable tag is-${this.state.status == 'valid' ? "success" : (this.state.status == 'invalid' ? "danger" : "dark")}`}>{this.state.status == 'valid' ? "True" : (this.state.status == 'invalid' ? "Fake" : "Not Determined")}</span>
+                        </div>
+                    </nav>
+                </div>
+            </article>
+        );
+    }
+}
+
+class SubmitArticle extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            title: "",
+            message: "",
+            titleState: "",
+            titleMsg: "",
+            messageState: "",
+            messageMsg: ""
+        }
+        this.handleChange = this.handleChange.bind(this);
+        this.submitArticle = this.submitArticle.bind(this);
+    }
+
+    handleChange(event) {
+        let value = event.target.value;
+        let name = event.target.name;
+
+        this.setState({ [name]: value, [name + "Msg"]: "", [name + "State"]: "" });
+    }
+
+    submitArticle(event) {
+        prevent(event);
+        let err = false;
+        if (!this.state.title) {
+            this.setState({ titleMsg: "The title cannot be empty", titleState: "danger" });
+            err = true;
+        }
+        if (!this.state.message) {
+            this.setState({ messageMsg: "The description cannot be empty", messageState: "danger" });
+            err = true;
+        }
+
+        if (err) return;
+
+        this.props.setState({ loading: true }, () => {
+
+            $.post("/submitArticle", { title: this.state.title, description: this.state.message }).done(data => {
+                if (!data.sql) {
+                    this.props.setState({ notification: true, notificationMessage: "The article could not be submitted. Please try again later." })
+                    return;
+                }
+
+                this.props.setState({ notification: true, notificationMessage: "Your article was submitted." }, () => this.setState({ title: "", message: "" }));
+
+            }).fail(err => this.props.setState({ notification: true, notificationMessage: "There was an error connecting to the server" })).always(() => this.props.setState({ loading: false }));
+        });
+    }
+
+    render() {
+        return (
+            <form className="submitForm" onSubmit={prevent}>
+                <div className="field">
+                    <label className="label">Title</label>
+                    <div className="control">
+                        <input className={`input ${this.state.titleState ? ("is-" + this.state.titleState) : ""}`} name="title" type="text" onChange={this.handleChange} value={this.state.title} placeholder="Title is used to find the article" />
+                    </div>
+                    <p className={`help ${this.state.messageState ? ("is-" + this.state.messageState) : ""}`}>{this.state.titleMsg}&nbsp;</p>
+                </div>
+
+
+                <div className="field">
+                    <label className="label">Brief Description</label>
+                    <div className="control">
+                        <textarea className={`textarea ${this.state.messageState ? ("is-" + this.state.messageState) : ""}`} maxLength="250" onChange={this.handleChange} value={this.state.message} name="message" placeholder="Describe the outline of the article"></textarea>
+                    </div>
+                    <p className={`help ${this.state.messageState ? ("is-" + this.state.messageState) : ""}`}>{this.state.messageMsg ? this.state.messageMsg : (`${250 - this.state.message.length} characters left`)}</p>
+                </div>
+
+                <div className="buttons is-centered">
+                    <div className="control">
+                        <a className="button is-link" onClick={this.submitArticle}>Submit</a>
+                    </div>
+                </div>
+            </form>
+
+        );
+    }
+}
+
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            username: null,
+            votes: null,
             active: this.props.active,
             loading: false,
             notification: false,
@@ -178,6 +337,7 @@ class App extends React.Component {
         this.closeNotification = this.closeNotification.bind(this);
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.submitSearch = this.submitSearch.bind(this);
+        this.setParent = this.setParent.bind(this);
     }
 
     /* Specific function */
@@ -186,7 +346,10 @@ class App extends React.Component {
             return;
 
         let callback = (value, data) => {
-            console.log(value, data);
+            if (!data.articles) {
+                this.setState({ trending: [], notification: true, notificationMessage: "There are no trending articles" });
+                return;
+            }
             switch (value) {
                 case "trending":
                     this.setState({ trending: data.articles });
@@ -199,18 +362,19 @@ class App extends React.Component {
             active: value
         }, () => {
             // Now, enable loading
-            if (value != "search")
+            if (value == "trending")
                 this.setState({ loading: true }, () => {
                     // Get data from server
-                    ajax(`http://127.0.0.1:3000/article?field=${value}`, (data) => {
-                        this.setState({ loading: false }, () => {
-                            callback(value, data);
-                        });
-                    }, () => {
-                        this.setState({ loading: false, notification: true, notificationMessage: "There was an error processing your request" });
-                    });
+                    $.get("/article", { field: value }).done(data => callback(value, data)).fail(() => { this.setState({ notification: true, notificationMessage: "There was an error processing your request" }) }).always(() => { this.setState({ loading: false }) });
                 });
         });
+    }
+
+    setParent(state, callback) {
+        if (callback)
+            this.setState(state, callback);
+        else
+            this.setState(state);
     }
 
     closeNotification() {
@@ -234,17 +398,38 @@ class App extends React.Component {
 
         // If we are here, the text is valid
         this.setState({ loading: true }, () => {
+            $.get("/article", { field: 'search', value: this.state.searchText }).done((data) => {
+                if (!data.sql) {
+                    this.setState({ loading: false, notification: true, notificationMessage: "There was an error connecting to the server" });
+                    return;
+                }
 
-            ajax("http://127.0.0.1:3000/article?" + serialize({ field: 'search', value: this.state.searchText }), (data) => {
-                this.setState({ loading: false, search: data.articles })
-            }, () => {
-                this.setState({ loading: false, notification: true, notificationMessage: "There was an error processing your request" });
-            }, "GET");
+                if (data.articles.length)
+                    this.setState({ search: data.articles });
+                else
+                    this.setState({ search: [], notification: true, notificationMessage: "No articles were found" });
+            }).fail(() => {
+                this.setState({ search: [], notification: true, notificationMessage: "There was an error processing your request" });
+            }).always(() => {
+                this.setState({ loading: false });
+            });
         });
     }
 
     componentDidMount() {
-        this.setActive(this.props.active);
+        // Step 1, check if the user is logged in
+        this.setState({ loading: true }, () => {
+            $.post("/checkUser", { field: 'loggedIn' }).done(
+                data => {
+
+                    if (!data.sql) {
+                        this.setState({ loading: false, notification: true, notificationMessage: "There was an error connecting to the server" });
+                        return;
+                    }
+
+                    data.status ? this.setState({ username: data.username, votes: data.votes }) : null;
+                }).fail(() => (this.setState({ loading: false, notification: true, notificationMessage: "There was an error connecting to the server" }))).always(() => this.setState({ loading: false, active: this.props.active }, () => this.setActive(this.props.active)));
+        });
     }
 
     /* Specific function */
@@ -253,40 +438,9 @@ class App extends React.Component {
             case "trending":
                 return (
                     <section>
-                        <h1 className="title has-text-centered">Trending Articles</h1>
+                        <h1 className="title has-text-centered">Recent Articles</h1>
                         {this.state.trending.map(item => (
-                            <article className="media box" key={item.id}>
-                                <figure className="media-left">
-                                    <p className="image is-64x64">
-                                        <img src="https://bulma.io/images/placeholders/128x128.png" />
-                                    </p>
-                                </figure>
-                                <div className="media-content">
-                                    <div className="content">
-                                        <p>
-                                            <strong>{item.title}</strong> <small>@johnsmith</small> <small>31m</small>
-                                            <br />
-                                            {item.content}
-                                        </p>
-                                    </div>
-                                    <nav className="level is-mobile">
-                                        <div className="level-left">
-                                            <a className="level-item">
-                                                <span className="icon is-small"><i className="fas fa-reply"></i></span>
-                                            </a>
-                                            <a className="level-item">
-                                                <span className="icon is-small"><i className="fas fa-retweet"></i></span>
-                                            </a>
-                                            <a className="level-item">
-                                                <span className="icon is-small"><i className="fas fa-heart"></i></span>
-                                            </a>
-                                        </div>
-                                    </nav>
-                                </div>
-                                <div className="media-right">
-                                    <button className="delete"></button>
-                                </div>
-                            </article>
+                            <Article setParent={this.setParent} key={item.id} id={item.id} userLogged={this.state.username} item={item} />
                         ))}
                     </section>
                 );
@@ -313,51 +467,23 @@ class App extends React.Component {
                             </div>
                         </div>
                         {this.state.search.map(item => (
-                            <article className="media box" key={item.id}>
-                                <figure className="media-left">
-                                    <p className="image is-64x64">
-                                        <img src="https://bulma.io/images/placeholders/128x128.png" />
-                                    </p>
-                                </figure>
-                                <div className="media-content">
-                                    <div className="content">
-                                        <p>
-                                            <strong>{item.title}</strong> <small>@johnsmith</small> <small>31m</small>
-                                            <br />
-                                            {item.content}
-                                        </p>
-                                    </div>
-                                    <nav className="level is-mobile">
-                                        <div className="level-left">
-                                            <a className="level-item">
-                                                <span className="icon is-small"><i className="fas fa-reply"></i></span>
-                                            </a>
-                                            <a className="level-item">
-                                                <span className="icon is-small"><i className="fas fa-retweet"></i></span>
-                                            </a>
-                                            <a className="level-item">
-                                                <span className="icon is-small"><i className="fas fa-heart"></i></span>
-                                            </a>
-                                        </div>
-                                    </nav>
-                                </div>
-                                <div className="media-right">
-                                    <button className="delete"></button>
-                                </div>
-                            </article>
+                            <Article setParent={this.setParent} key={item.id} id={item.id} userLogged={this.state.username == null} item={item} />
                         ))}
                     </section>
                 );
+            case "submit":
+                return (
+                    <SubmitArticle setState={this.setParent} />
+                );
         }
     }
-
 
     render() {
         return (
             <div className="app">
                 <Notification message={this.state.notificationMessage} hidden={!this.state.notification} close={this.closeNotification} />
                 <Preloader active={this.state.loading} />
-                <Menu itemList={[{ title: "Trending", icon: "chart-line", value: "trending" }, { title: "Search", icon: "search", value: "search" }]}
+                <Menu userLogged={this.state.username} title={this.state.username} subtitle={this.state.votes !== null ? ("Logged In") : ""} itemList={this.state.username ? [{ title: "Trending", icon: "chart-line", value: "trending" }, { title: "Search", icon: "search", value: "search" }, { title: "Submit Article", icon: "newspaper", value: "submit" }] : [{ title: "Trending", icon: "chart-line", value: "trending" }, { title: "Search", icon: "search", value: "search" }]}
                     active={this.state.active} activateFunction={this.setActive}
                 />
                 <div className="my-content">
@@ -376,6 +502,6 @@ window.onload = () => {
 
     // Use react
     // Render the app. The Regular Epxression for the username field is given
-    ReactDOM.render(<App active="search" />, node);
+    ReactDOM.render(<App active="trending" />, node);
 
 }

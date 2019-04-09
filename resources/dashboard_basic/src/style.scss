@@ -11,10 +11,11 @@
 @import "../../../node_modules/bulma/sass/elements/box.sass";
 @import "../../../node_modules/bulma/sass/components/level.sass";
 @import "../../../node_modules/bulma/sass/elements/form.sass";
+@import "../../../node_modules/bulma/sass/elements/tag.sass";
 
 /* Basic styling */
 html {
-    overflow: auto;
+    overflow-y: scroll;
 
     *::selection {
         background: $link;
@@ -39,116 +40,6 @@ html {
     /* Handle on hover */
     ::-webkit-scrollbar-thumb:hover {
         background: #555;
-    }
-}
-
-/* Preloader */
-.spinner {
-    width: 60px;
-    height: 60px;
-
-    position: relative;
-    margin: 100px auto;
-}
-
-.double-bounce1,
-.double-bounce2 {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background-color: #fff;
-    opacity: 0.6;
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
-    animation: sk-bounce 2.0s infinite ease-in-out;
-}
-
-.double-bounce2 {
-    -webkit-animation-delay: -1.0s;
-    animation-delay: -1.0s;
-}
-
-@-webkit-keyframes sk-bounce {
-
-    0%,
-    100% {
-        -webkit-transform: scale(0.0)
-    }
-
-    50% {
-        -webkit-transform: scale(1.0)
-    }
-}
-
-@keyframes sk-bounce {
-
-    0%,
-    100% {
-        transform: scale(0.0);
-        -webkit-transform: scale(0.0);
-    }
-
-    50% {
-        transform: scale(1.0);
-        -webkit-transform: scale(1.0);
-    }
-}
-
-.preloader-overlay {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba($black, 0.8);
-    z-index: 100;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 500ms, visibility 500ms;
-
-    &.is-active {
-        opacity: 1;
-        visibility: visible;
-    }
-}
-
-/* The notification component */
-.notification-holder {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    padding: 0 10vw;
-    align-items: center;
-    justify-content: center;
-    background: rgba($black, 0.8);
-    z-index: 90;
-    transition: opacity 300ms, visibility 300ms;
-
-    .notification {
-        max-width: 600px;
-    }
-
-    .overlay {
-        cursor: pointer;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-    }
-
-    &.hidden {
-        opacity: 0;
-        visibility: hidden;
     }
 }
 
@@ -186,6 +77,29 @@ html {
 
     .media.box {
         display: flex;
+    }
+}
+
+a.disabled {
+    pointer-events: none;
+}
+
+.submitForm {
+    display: flex;
+    flex-direction: column;
+    min-height: 70vh;
+    justify-content: center;
+    align-items: center;
+
+    &>.field {
+        width: 60vw;
+    }
+}
+
+.button {
+    &.hidden {
+        visibility: hidden;
+        opacity: 0;
     }
 }
 
@@ -268,11 +182,15 @@ html {
 
         .my-content {
             margin-left: 0;
+            padding: 10vh 20px;
 
             .field.is-horizontal {
-                width: 80%;
-                min-width: 300px;
+                width: 90%;
             }
+        }
+
+        .submitForm>.field {
+            width: 95%;
         }
     }
 }
